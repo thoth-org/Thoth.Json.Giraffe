@@ -108,8 +108,13 @@ type ThothSerializer (?isCamelCase : bool, ?extra: ExtraCoders) =
           }
 
         member __.SerializeToBytes<'T>(o : 'T) : byte array =
-            let t = o.GetType()
-            let encoder = Encode.Auto.generateEncoderCached(t, ?isCamelCase=isCamelCase, ?extra=extra)
+            let encoder =
+                try
+                    let t = o.GetType()
+                    Encode.Auto.generateEncoderCached(t, ?isCamelCase=isCamelCase, ?extra=extra)
+                with
+                    | _ -> 
+                    Encode.Auto.generateEncoder(?isCamelCase=isCamelCase, ?extra=extra)
             // TODO: Would it help to create a pool of buffers for the memory stream?
             use stream = new MemoryStream()
             use writer = new StreamWriter(stream, Utf8EncodingWithoutBom, DefaultBufferSize)
