@@ -77,7 +77,7 @@ type ThothSerializer (?isCamelCase : bool, ?extra: ExtraCoders) =
     interface IJsonSerializer with
         member __.SerializeToString (o : 'T) =
             let t = if isNull <| box o then typeof<'T> else o.GetType()
-            let encoder = Encode.Auto.generateEncoderCached(t, ?isCamelCase=isCamelCase, ?extra=extra)
+            let encoder = Encode.Auto.LowLevel.generateEncoderCached(t, ?isCamelCase=isCamelCase, ?extra=extra)
             encoder o |> Encode.toString 0
 
         member __.Deserialize<'T> (json : string) =
@@ -109,7 +109,7 @@ type ThothSerializer (?isCamelCase : bool, ?extra: ExtraCoders) =
 
         member __.SerializeToBytes<'T>(o : 'T) : byte array =
             let t = if isNull <| box o then typeof<'T> else o.GetType()
-            let encoder = Encode.Auto.generateEncoderCached(t, ?isCamelCase=isCamelCase, ?extra=extra)
+            let encoder = Encode.Auto.LowLevel.generateEncoderCached(t, ?isCamelCase=isCamelCase, ?extra=extra)
             // TODO: Would it help to create a pool of buffers for the memory stream?
             use stream = new MemoryStream()
             use writer = new StreamWriter(stream, Utf8EncodingWithoutBom, DefaultBufferSize)
