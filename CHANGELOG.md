@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+## 2.2.0
+
+### Fixed
+
+* Fix encoding when passing array (see [#3](https://github.com/thoth-org/Thoth.Json.Giraffe/pull/3))
+
 ## 2.1.0
 
 ### Fixed
