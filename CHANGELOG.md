@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-* Fix encoding when passing array (see [#3](https://github.com/thoth-org/Thoth.Json.Giraffe/pull/3))
+* Fix encoding when passing array (see [#3](https://github.com/thoth-org/Thoth.Json.Giraffe/pull/3)) (by @johannesegger)
 
 ## 2.1.0
 
