@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+## 2.3.0
+
+### Added
+
+* Add `skipNullField` options to pass to `Encode.Auto`
+
 ## 2.2.0
 
 ### Fixed

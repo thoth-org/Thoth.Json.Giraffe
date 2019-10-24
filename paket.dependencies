@@ -2,5 +2,5 @@ source https://www.nuget.org/api/v2
 storage: none
 
 nuget FSharp.Core redirects:force, content:none
-nuget Giraffe
+nuget Giraffe >= 3.6 lowest_matching:true
 nuget Thoth.Json.Net
