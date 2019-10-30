@@ -14,11 +14,10 @@ type ThothSerializer (?isCamelCase : bool, ?extra : ExtraCoders, ?skipNullField 
     static let Utf8EncodingWithoutBom = new UTF8Encoding(false)
     static let DefaultBufferSize = 1024
 
-    /// Sets status code to 200 and responds a JSON
+    /// Responds a JSON
     static member RespondRawJson (body: JToken) =
         fun (next: HttpFunc) (ctx: HttpContext) ->
             task {
-                ctx.SetStatusCode 200
                 ctx.SetContentType "application/json; charset=utf-8"
                 use stream = new System.IO.StreamWriter(ctx.Response.Body, Utf8EncodingWithoutBom, DefaultBufferSize)
                 use jsonWriter = new JsonTextWriter(stream)
@@ -26,11 +25,11 @@ type ThothSerializer (?isCamelCase : bool, ?extra : ExtraCoders, ?skipNullField 
                 return Some ctx
             }
 
-    /// Sets status code to 200 and responds a JSON
+    /// Responds a JSON
     static member RespondJson (body: 'T) (encoder: Encoder<'T>) =
         encoder body |> ThothSerializer.RespondRawJson
 
-    /// Sets status code to 200 and responds a JSON array by writing items
+    /// Responds a JSON array by writing items
     /// into response stream one by one
     static member RespondRawJsonSeq (items: JToken seq) =
         fun (next: HttpFunc) (ctx: HttpContext) ->
@@ -47,7 +46,7 @@ type ThothSerializer (?isCamelCase : bool, ?extra : ExtraCoders, ?skipNullField 
                 return Some ctx
             }
 
-    /// Sets status code to 200 and responds a JSON array by serializing items
+    /// Responds a JSON array by serializing items
     /// into response stream one by one
     static member RespondJsonSeq (items: 'T seq) (encoder: Encoder<'T>) =
         items |> Seq.map encoder |> ThothSerializer.RespondRawJsonSeq
