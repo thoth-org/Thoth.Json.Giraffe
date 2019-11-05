@@ -140,17 +140,23 @@ let pushNuget (newVersion: string) (projFile: string) =
 
     let projDir = Path.GetDirectoryName(projFile)
 
-    let files =
+    let file =
         Directory.GetFiles(projDir </> "bin" </> "Release", "*.nupkg")
         |> Array.find (fun nupkg -> nupkg.Contains(newVersion))
-        |> fun x -> [x]
 
     if needsPublishing then
-        Paket.pushFiles (fun o ->
-            { o with ApiKey = nugetKey
-                     PublishUrl = "https://www.nuget.org/api/v2/package"
-                     WorkingDir = __SOURCE_DIRECTORY__ })
-            files
+        run
+            "dotnet"
+            root
+            [
+                "paket"
+                "push"
+                "--url"
+                "https://www.nuget.org/api/v2/package"
+                "--api-key"
+                nugetKey
+                file
+            ]
 
 let versionRegex = Regex("^## ?\\[?v?([\\w\\d.-]+\\.[\\w\\d.-]+[a-zA-Z0-9])\\]?", RegexOptions.IgnoreCase)
 
