@@ -19,7 +19,7 @@ type ThothSerializer (?isCamelCase : bool, ?extra : ExtraCoders, ?skipNullField 
         fun (next: HttpFunc) (ctx: HttpContext) ->
             task {
                 ctx.SetContentType "application/json; charset=utf-8"
-                use stream = new System.IO.StreamWriter(ctx.Response.Body, Utf8EncodingWithoutBom, DefaultBufferSize)
+                use stream = new System.IO.StreamWriter(ctx.Response.Body, Utf8EncodingWithoutBom, DefaultBufferSize, true)
                 use jsonWriter = new JsonTextWriter(stream)
                 do! body.WriteToAsync(jsonWriter)
                 return Some ctx
@@ -37,7 +37,7 @@ type ThothSerializer (?isCamelCase : bool, ?extra : ExtraCoders, ?skipNullField 
                 ctx.SetStatusCode 200
                 ctx.SetContentType "application/json; charset=utf-8"
                 use stream =
-                    new System.IO.StreamWriter(ctx.Response.Body, Utf8EncodingWithoutBom, DefaultBufferSize)
+                    new System.IO.StreamWriter(ctx.Response.Body, Utf8EncodingWithoutBom, DefaultBufferSize, true)
                 use jsonWriter = new JsonTextWriter(stream)
                 jsonWriter.WriteStartArray()
                 for item in items do
@@ -53,7 +53,7 @@ type ThothSerializer (?isCamelCase : bool, ?extra : ExtraCoders, ?skipNullField 
 
     static member ReadBodyRaw (ctx: HttpContext) =
         task {
-            use stream = new System.IO.StreamReader(ctx.Request.Body, Utf8EncodingWithoutBom)
+            use stream = new System.IO.StreamReader(ctx.Request.Body, Utf8EncodingWithoutBom, true, DefaultBufferSize, true)
             use jsonReader = new JsonTextReader(stream)
             let! json = JValue.ReadFromAsync jsonReader
             return json
