@@ -8,7 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+## 3.1.0
+
+### Changed
+
+* Fix #7: Don't dispose the streams we didn't create ourself (by @MaxDeg)
+
 ## 3.0.0
+
+### Changed
 
 * Remove setStatusCode and update comments (by @MaxDeg)
 
