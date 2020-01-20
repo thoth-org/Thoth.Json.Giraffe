@@ -22,6 +22,7 @@ type ThothSerializer (?isCamelCase : bool, ?extra : ExtraCoders, ?skipNullField 
                 use stream = new System.IO.StreamWriter(ctx.Response.Body, Utf8EncodingWithoutBom, DefaultBufferSize, true)
                 use jsonWriter = new JsonTextWriter(stream)
                 do! body.WriteToAsync(jsonWriter)
+                do! jsonWriter.FlushAsync()
                 return Some ctx
             }
 
@@ -42,6 +43,7 @@ type ThothSerializer (?isCamelCase : bool, ?extra : ExtraCoders, ?skipNullField 
                 jsonWriter.WriteStartArray()
                 for item in items do
                     do! item.WriteToAsync(jsonWriter)
+                do! jsonWriter.FlushAsync()
                 jsonWriter.WriteEndArray()
                 return Some ctx
             }
@@ -127,4 +129,5 @@ type ThothSerializer (?isCamelCase : bool, ?extra : ExtraCoders, ?skipNullField 
                 use jsonWriter = new JsonTextWriter(streamWriter)
                 let encoder = Encode.Auto.generateEncoderCached<'T>(?isCamelCase=isCamelCase, ?extra=extra, ?skipNullField=skipNullField)
                 do! (encoder o).WriteToAsync(jsonWriter)
+                do! jsonWriter.FlushAsync()
             }
