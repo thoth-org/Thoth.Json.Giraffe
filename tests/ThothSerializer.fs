@@ -80,8 +80,8 @@ let tests =
   testList "ThothSerializer" [
       testTask "Serialization" {
           let hostBuilder = createHost ()
-          let! (host : IHost) = hostBuilder.StartAsync()
-          let client = host.GetTestClient()
+          use! host = hostBuilder.StartAsync ()
+          let client = (host :> IHost).GetTestClient()
           let! (response : HttpResponseMessage) = client.GetAsync("/")
           let! content = response.EnsureSuccessStatusCode().Content.ReadAsStringAsync()
           
@@ -90,8 +90,8 @@ let tests =
       
       testTask "Deserialization" {
           let hostBuilder = createHost ()
-          let! (host : IHost) = hostBuilder.StartAsync()
-          let client = host.GetTestClient()
+          use! host = hostBuilder.StartAsync()
+          let client = (host :> IHost).GetTestClient()
           let! (response : HttpResponseMessage) = client.PostAsync("/", new StringContent(json))
           let! content = response.EnsureSuccessStatusCode().Content.ReadAsStringAsync()
           
