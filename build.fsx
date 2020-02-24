@@ -38,9 +38,9 @@ module Source =
     let dir = root </> "src"
     let projectFile = dir </> "Thoth.Json.Giraffe.fsproj"
 
-// module Tests =
-//     let dir = root </> "tests"
-//     let projectFile = dir </> "Tests.fsproj"
+module Tests =
+    let dir = root </> "tests"
+    let projectFile = dir </> "Thoth.Json.Giraffe.Tests.fsproj"
 
 let gitOwner = "thoth-org"
 let repoName = "Thoth.Json.Giraffe"
@@ -180,7 +180,7 @@ let getNotes (version : string) =
         let m = versionRegex.Match(line)
 
         if m.Success then
-            not (m.Groups.[1].Value = version)
+            m.Groups.[1].Value <> version
         else
             true
     )
@@ -191,6 +191,10 @@ let getNotes (version : string) =
         let m = versionRegex.Match(line)
         not m.Success
     )
+
+Target.create "Test" (fun _ ->
+    DotNet.test id Tests.projectFile
+)
 
 Target.create "Publish" (fun _ ->
     let version = getLastVersion()
@@ -220,6 +224,7 @@ Target.create "Release" (fun _ ->
 "Clean"
     ==> "YarnInstall"
     ==> "DotnetRestore"
+    ==> "Test"
     ==> "Publish"
     ==> "Release"
 

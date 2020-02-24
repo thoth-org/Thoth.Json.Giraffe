@@ -4,6 +4,10 @@ storage: none
 nuget FSharp.Core redirects:force, content:none
 nuget Giraffe >= 3.6 lowest_matching:true
 nuget Thoth.Json.Net
+nuget Expecto
+nuget Microsoft.AspNetCore.TestHost
+nuget Microsoft.NET.Test.Sdk
+nuget YoloDev.Expecto.TestSdk
 
 group netcorebuild
     source https://www.nuget.org/api/v2
