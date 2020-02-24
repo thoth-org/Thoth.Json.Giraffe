@@ -30,7 +30,7 @@ module Encode =
       [ "id",   Encode.int id
         "name", Encode.string name
       ]
-  
+
   let persons ps = List.map person ps |> Encode.list
 
 module Decode =
@@ -52,8 +52,8 @@ let webApp =
             | Error e -> return! text (sprintf "Error while deserializing: %s" e) next ctx
         }
 
-    choose 
-      [ route "/" >=> 
+    choose
+      [ route "/" >=>
           choose
             [ GET >=>
                 ThothSerializer.RespondJson
@@ -67,7 +67,7 @@ let webApp =
 
 let createHost () =
     HostBuilder()
-        .ConfigureServices(Action<IServiceCollection> 
+        .ConfigureServices(Action<IServiceCollection>
             (fun (services : IServiceCollection) -> services.AddGiraffe() |> ignore))
         .ConfigureWebHost(fun webHost ->
                 webHost.UseTestServer() |> ignore
@@ -84,17 +84,17 @@ let tests =
           let client = (host :> IHost).GetTestClient()
           let! (response : HttpResponseMessage) = client.GetAsync("/")
           let! content = response.EnsureSuccessStatusCode().Content.ReadAsStringAsync()
-          
+
           Expect.equal content json "Serialization failure"
       }
-      
+
       testTask "Deserialization" {
           let hostBuilder = createHost ()
           use! host = hostBuilder.StartAsync()
           let client = (host :> IHost).GetTestClient()
           let! (response : HttpResponseMessage) = client.PostAsync("/", new StringContent(json))
           let! content = response.EnsureSuccessStatusCode().Content.ReadAsStringAsync()
-          
+
           Expect.equal content json "Deserialization failure"
       }
   ]
