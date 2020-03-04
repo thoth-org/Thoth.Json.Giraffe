@@ -363,7 +363,7 @@ NUGET
       FSharp.Core (>= 4.1.17) - restriction: || (&& (>= net45) (< net46) (< netstandard1.6)) (&& (< net45) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.6)) (>= net47)
       NETStandard.Library (>= 1.6.1) - restriction: && (< net45) (>= netstandard1.6)
       System.ValueTuple (>= 4.4) - restriction: || (&& (>= net45) (< net46) (< netstandard1.6)) (&& (< net45) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.6)) (>= net47)
-    Thoth.Json.Net (3.6)
+    Thoth.Json.Net (4.0)
       Fable.Core (>= 3.0 < 4.0) - restriction: && (< net46) (>= netstandard2.0)
       FSharp.Core (>= 4.6.2) - restriction: || (>= net46) (>= netstandard2.0)
       Newtonsoft.Json (>= 11.0.2) - restriction: || (>= net46) (>= netstandard2.0)

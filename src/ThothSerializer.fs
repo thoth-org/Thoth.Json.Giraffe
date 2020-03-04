@@ -10,7 +10,7 @@ open Giraffe
 open Giraffe.Serialization.Json
 open Thoth.Json.Net
 
-type ThothSerializer (?isCamelCase : bool, ?extra : ExtraCoders, ?skipNullField : bool) =
+type ThothSerializer (?caseStrategy : CaseStrategy, ?extra : ExtraCoders, ?skipNullField : bool) =
     static let Utf8EncodingWithoutBom = new UTF8Encoding(false)
     static let DefaultBufferSize = 1024
 
@@ -78,17 +78,17 @@ type ThothSerializer (?isCamelCase : bool, ?extra : ExtraCoders, ?skipNullField 
     interface IJsonSerializer with
         member __.SerializeToString (o : 'T) =
             let t = if isNull <| box o then typeof<'T> else o.GetType()
-            let encoder = Encode.Auto.LowLevel.generateEncoderCached(t, ?isCamelCase=isCamelCase, ?extra=extra, ?skipNullField=skipNullField)
+            let encoder = Encode.Auto.LowLevel.generateEncoderCached(t, ?caseStrategy=caseStrategy, ?extra=extra, ?skipNullField=skipNullField)
             encoder o |> Encode.toString 0
 
         member __.Deserialize<'T> (json : string) =
-            let decoder = Decode.Auto.generateDecoderCached<'T>(?isCamelCase=isCamelCase, ?extra=extra)
+            let decoder = Decode.Auto.generateDecoderCached<'T>(?caseStrategy=caseStrategy, ?extra=extra)
             match Decode.fromString decoder json with
             | Ok x -> x
             | Error er -> failwith er
 
         member __.Deserialize<'T> (bytes : byte[]) =
-            let decoder = Decode.Auto.generateDecoderCached<'T>(?isCamelCase=isCamelCase, ?extra=extra)
+            let decoder = Decode.Auto.generateDecoderCached<'T>(?caseStrategy=caseStrategy, ?extra=extra)
             use stream = new MemoryStream(bytes)
             use streamReader = new StreamReader(stream)
             use jsonReader = new JsonTextReader(streamReader)
@@ -98,7 +98,7 @@ type ThothSerializer (?isCamelCase : bool, ?extra : ExtraCoders, ?skipNullField 
             | Error er -> failwith er
 
         member __.DeserializeAsync<'T> (stream : Stream) = task {
-            let decoder = Decode.Auto.generateDecoderCached<'T>(?isCamelCase=isCamelCase, ?extra=extra)
+            let decoder = Decode.Auto.generateDecoderCached<'T>(?caseStrategy=caseStrategy, ?extra=extra)
             use streamReader = new StreamReader(stream)
             use jsonReader = new JsonTextReader(streamReader)
             let! json = JValue.ReadFromAsync jsonReader
@@ -110,7 +110,7 @@ type ThothSerializer (?isCamelCase : bool, ?extra : ExtraCoders, ?skipNullField 
 
         member __.SerializeToBytes<'T>(o : 'T) : byte array =
             let t = if isNull <| box o then typeof<'T> else o.GetType()
-            let encoder = Encode.Auto.LowLevel.generateEncoderCached(t, ?isCamelCase=isCamelCase, ?extra=extra, ?skipNullField=skipNullField)
+            let encoder = Encode.Auto.LowLevel.generateEncoderCached(t, ?caseStrategy=caseStrategy, ?extra=extra, ?skipNullField=skipNullField)
             // TODO: Would it help to create a pool of buffers for the memory stream?
             use stream = new MemoryStream()
             use writer = new StreamWriter(stream, Utf8EncodingWithoutBom, DefaultBufferSize)
@@ -127,7 +127,7 @@ type ThothSerializer (?isCamelCase : bool, ?extra : ExtraCoders, ?skipNullField 
             upcast task {
                 use streamWriter = new System.IO.StreamWriter(stream, Utf8EncodingWithoutBom, DefaultBufferSize, true)
                 use jsonWriter = new JsonTextWriter(streamWriter)
-                let encoder = Encode.Auto.generateEncoderCached<'T>(?isCamelCase=isCamelCase, ?extra=extra, ?skipNullField=skipNullField)
+                let encoder = Encode.Auto.generateEncoderCached<'T>(?caseStrategy=caseStrategy, ?extra=extra, ?skipNullField=skipNullField)
                 do! (encoder o).WriteToAsync(jsonWriter)
                 do! jsonWriter.FlushAsync()
             }

@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+## 4.0.0 - 2020-03-04
+
+* Update to Thoth.Json.Net v4
+
 ## 3.2.0
 
 * Avoid "Synchronous operations are disallowed. Call WriteAsync or set AllowSynchronousIO to true." (by @MaxDeg)
