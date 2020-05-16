@@ -8,11 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+## 4.1.0 - 2020-05-16
+
+### Fixed
+
+* Avoiding aspnet core "Synchronous operations are disallowed" exception (by @MaxDeg)
+
 ## 4.0.0 - 2020-03-04
+
+### Changed
 
 * Update to Thoth.Json.Net v4
 
 ## 3.2.0
+
+### Fixed
 
 * Avoid "Synchronous operations are disallowed. Call WriteAsync or set AllowSynchronousIO to true." (by @MaxDeg)
 
