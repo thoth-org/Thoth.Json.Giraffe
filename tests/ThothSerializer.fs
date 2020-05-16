@@ -1,15 +1,11 @@
 module Tests.ThothSerializer
 
 open System
-open System.Net
 open System.Net.Http
 
-open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
-open Microsoft.AspNetCore.TestHost
 open Microsoft.Extensions.Hosting
-open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 
 open FSharp.Control.Tasks.V2.ContextInsensitive
@@ -69,30 +65,30 @@ let createHost () =
     HostBuilder()
         .ConfigureServices(Action<IServiceCollection>
             (fun (services : IServiceCollection) -> services.AddGiraffe() |> ignore))
-        .ConfigureWebHost(fun webHost ->
-                webHost.UseTestServer() |> ignore
+        .ConfigureWebHostDefaults(fun webHost ->
                 webHost.Configure(Action<IApplicationBuilder> (fun app -> app.UseGiraffe(webApp) |> ignore))
                  |> ignore)
+        .Build()               
 
 [<Tests>]
 let tests =
   let json = "[{\"id\":1,\"name\":\"Maxime\"},{\"id\":2,\"name\":\"Thoth\"}]"
   testList "ThothSerializer" [
       testTask "Serialization" {
-          let hostBuilder = createHost ()
-          use! host = hostBuilder.StartAsync ()
-          let client = (host :> IHost).GetTestClient()
-          let! (response : HttpResponseMessage) = client.GetAsync("/")
+          let host = createHost ()
+          use _ = host.StartAsync ()
+          let client = new HttpClient()
+          let! (response : HttpResponseMessage) = client.GetAsync("http://localhost:5000/")
           let! content = response.EnsureSuccessStatusCode().Content.ReadAsStringAsync()
 
           Expect.equal content json "Serialization failure"
       }
 
       testTask "Deserialization" {
-          let hostBuilder = createHost ()
-          use! host = hostBuilder.StartAsync()
-          let client = (host :> IHost).GetTestClient()
-          let! (response : HttpResponseMessage) = client.PostAsync("/", new StringContent(json))
+          let host = createHost ()
+          use _ = host.StartAsync ()
+          let client = new HttpClient()
+          let! (response : HttpResponseMessage) = client.PostAsync("http://localhost:5000/", new StringContent(json))
           let! content = response.EnsureSuccessStatusCode().Content.ReadAsStringAsync()
 
           Expect.equal content json "Deserialization failure"

@@ -19,8 +19,8 @@ type ThothSerializer (?caseStrategy : CaseStrategy, ?extra : ExtraCoders, ?skipN
         fun (next: HttpFunc) (ctx: HttpContext) ->
             task {
                 ctx.SetContentType "application/json; charset=utf-8"
-                use stream = new System.IO.StreamWriter(ctx.Response.Body, Utf8EncodingWithoutBom, DefaultBufferSize, true)
-                use jsonWriter = new JsonTextWriter(stream)
+                let stream = new System.IO.StreamWriter(ctx.Response.Body, Utf8EncodingWithoutBom, DefaultBufferSize, true)
+                let jsonWriter = new JsonTextWriter(stream)
                 do! body.WriteToAsync(jsonWriter)
                 do! jsonWriter.FlushAsync()
                 return Some ctx
@@ -37,9 +37,9 @@ type ThothSerializer (?caseStrategy : CaseStrategy, ?extra : ExtraCoders, ?skipN
             task {
                 ctx.SetStatusCode 200
                 ctx.SetContentType "application/json; charset=utf-8"
-                use stream =
+                let stream =
                     new System.IO.StreamWriter(ctx.Response.Body, Utf8EncodingWithoutBom, DefaultBufferSize, true)
-                use jsonWriter = new JsonTextWriter(stream)
+                let jsonWriter = new JsonTextWriter(stream)
                 jsonWriter.WriteStartArray()
                 for item in items do
                     do! item.WriteToAsync(jsonWriter)
@@ -125,8 +125,8 @@ type ThothSerializer (?caseStrategy : CaseStrategy, ?extra : ExtraCoders, ?skipN
         // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Transfer-Encoding#Directives
         member __.SerializeToStreamAsync (o : 'T) (stream : Stream) =
             upcast task {
-                use streamWriter = new System.IO.StreamWriter(stream, Utf8EncodingWithoutBom, DefaultBufferSize, true)
-                use jsonWriter = new JsonTextWriter(streamWriter)
+                let streamWriter = new System.IO.StreamWriter(stream, Utf8EncodingWithoutBom, DefaultBufferSize, true)
+                let jsonWriter = new JsonTextWriter(streamWriter)
                 let encoder = Encode.Auto.generateEncoderCached<'T>(?caseStrategy=caseStrategy, ?extra=extra, ?skipNullField=skipNullField)
                 do! (encoder o).WriteToAsync(jsonWriter)
                 do! jsonWriter.FlushAsync()
