@@ -43,8 +43,8 @@ type ThothSerializer (?caseStrategy : CaseStrategy, ?extra : ExtraCoders, ?skipN
                 jsonWriter.WriteStartArray()
                 for item in items do
                     do! item.WriteToAsync(jsonWriter)
-                do! jsonWriter.FlushAsync()
                 jsonWriter.WriteEndArray()
+                do! jsonWriter.FlushAsync()
                 return Some ctx
             }
 
