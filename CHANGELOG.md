@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+## 4.2.0 - 2020-06-09
+
+* Fix Sequence serialization not writing a close `]` (by @ImaginaryDevelopment)
+
 ## 4.1.0 - 2020-05-16
 
 ### Fixed
