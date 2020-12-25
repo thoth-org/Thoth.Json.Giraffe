@@ -55,16 +55,21 @@ type ThothSerializer (?caseStrategy : CaseStrategy, ?extra : ExtraCoders, ?skipN
 
     static member ReadBodyRaw (ctx: HttpContext) =
         task {
-            use stream = new System.IO.StreamReader(ctx.Request.Body, Utf8EncodingWithoutBom, true, DefaultBufferSize, true)
-            use jsonReader = new JsonTextReader(stream)
-            let! json = JValue.ReadFromAsync jsonReader
-            return json
+            try
+                use stream = new System.IO.StreamReader(ctx.Request.Body, Utf8EncodingWithoutBom, true, DefaultBufferSize, true)
+                use jsonReader = new JsonTextReader(stream)
+                let! json = JValue.ReadFromAsync jsonReader
+                return Ok json
+            with
+                | :? Newtonsoft.Json.JsonReaderException as ex ->
+                    return Error("Given an invalid JSON: " + ex.Message)
         }
 
     static member ReadBody (ctx: HttpContext) (decoder: Decoder<'T>) =
         task {
-            let! json = ThothSerializer.ReadBodyRaw ctx
-            return Decode.fromValue "$" decoder json
+            match! ThothSerializer.ReadBodyRaw ctx with
+            | Ok json -> return Decode.fromValue "$" decoder json
+            | Error e -> return Error e
         }
 
     static member ReadBodyUnsafe (ctx: HttpContext) (decoder: Decoder<'T>) =
