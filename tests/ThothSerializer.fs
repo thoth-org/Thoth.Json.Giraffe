@@ -167,4 +167,14 @@ let tests =
 
             Expect.equal content json "Deserialization failure"
         }
+        
+        testTask "DeserializationWhenBodyIsEmpty" {
+            let host = createHost ()
+            use _ = host.StartAsync ()
+            let client = new HttpClient()
+            let! (response : HttpResponseMessage) = client.PostAsync("http://localhost:5000/", null)
+            let! content = response.Content.ReadAsStringAsync()
+
+            Expect.stringStarts content "Error while deserializing" "Deserialization exception handling failure"
+        }
   ]
