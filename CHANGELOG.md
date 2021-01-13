@@ -6,7 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+
 ### Added
+
+## 4.3.0 - 2021-01-13
+
+### Changed
+
+* PR #17, Issue #16: Catch exception thrown by JsonTextReader when the request body is empty. To match with Thoth.Json.Net behaviour (by @BennieCopeland)
 
 ## 4.2.0 - 2020-06-09
 
