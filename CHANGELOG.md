@@ -6,8 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 5.0.0-beta-001 - 2021-0105-27
 
-### Added
+### Changed
+
+* Upgrade to Thoth.Json.Net v5
+* Upgrade to Giraffe v5
+* Change the runtime to `net5.0`
 
 ## 4.3.0 - 2021-01-13
 
