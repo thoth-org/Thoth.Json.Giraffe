@@ -8,7 +8,7 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 
-open FSharp.Control.Tasks.V2.ContextInsensitive
+open FSharp.Control.Tasks
 
 open Giraffe
 open Thoth.Json.Giraffe
@@ -167,7 +167,7 @@ let tests =
 
             Expect.equal content json "Deserialization failure"
         }
-        
+
         testTask "DeserializationWhenBodyIsEmpty" {
             let host = createHost ()
             use _ = host.StartAsync ()

@@ -2,12 +2,11 @@ namespace Thoth.Json.Giraffe
 
 open System.IO
 open System.Text
-open FSharp.Control.Tasks.V2
+open FSharp.Control.Tasks
 open Newtonsoft.Json
 open Newtonsoft.Json.Linq
 open Microsoft.AspNetCore.Http
 open Giraffe
-open Giraffe.Serialization.Json
 open Thoth.Json.Net
 
 type ThothSerializer (?caseStrategy : CaseStrategy, ?extra : ExtraCoders, ?skipNullField : bool) =
@@ -80,7 +79,7 @@ type ThothSerializer (?caseStrategy : CaseStrategy, ?extra : ExtraCoders, ?skipN
                    | Error er -> failwith er
         }
 
-    interface IJsonSerializer with
+    interface Json.ISerializer with
         member __.SerializeToString (o : 'T) =
             let t = if isNull <| box o then typeof<'T> else o.GetType()
             let encoder = Encode.Auto.LowLevel.generateEncoderCached(t, ?caseStrategy=caseStrategy, ?extra=extra, ?skipNullField=skipNullField)
