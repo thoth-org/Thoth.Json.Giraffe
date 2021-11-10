@@ -8,8 +8,6 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 
-open FSharp.Control.Tasks
-
 open Giraffe
 open Thoth.Json.Giraffe
 

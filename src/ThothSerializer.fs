@@ -2,7 +2,6 @@ namespace Thoth.Json.Giraffe
 
 open System.IO
 open System.Text
-open FSharp.Control.Tasks
 open Newtonsoft.Json
 open Newtonsoft.Json.Linq
 open Microsoft.AspNetCore.Http
