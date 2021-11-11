@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 6.0.0-beta-001 - 2021-11-11
+
+* Upgrade to Giraffe v6
+* Change the runtime to `net6.0`
+
 ## 5.0.0 - 2021-05-28
 
 ### Added
