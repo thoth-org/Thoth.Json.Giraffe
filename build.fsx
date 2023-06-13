@@ -1,58 +1,27 @@
-#r "paket: groupref netcorebuild //"
-#load ".fake/build.fsx/intellisense.fsx"
-#if !FAKE
-#r "Facades/netstandard"
-#r "netstandard"
-#endif
+#r "nuget: Fun.Build, 0.3.7"
+#r "nuget: Fake.IO.FileSystem, 6.0.0"
+#r "nuget: BlackFox.CommandLine, 1.0.0"
+#r "nuget: Fake.Core.ReleaseNotes, 6.0.0"
+#r "nuget: FsToolkit.ErrorHandling, 4.3.0"
 
-#nowarn "52"
-
+open Fun.Build
 open System
 open System.IO
 open System.Text.RegularExpressions
 open Fake.Core
-open Fake.Core.TargetOperators
-open Fake.DotNet
 open Fake.IO
-open Fake.IO.Globbing.Operators
 open Fake.IO.FileSystemOperators
-open Fake.Tools
-open Fake.JavaScript
-open Fake.Api
-
-let versionFromGlobalJson : DotNet.CliInstallOptions -> DotNet.CliInstallOptions = (fun o ->
-        { o with Version = DotNet.Version (DotNet.getSDKVersionFromGlobalJson()) }
-    )
-
-let dotnetSdk = lazy DotNet.install versionFromGlobalJson
-let inline dtntWorkDir wd =
-    DotNet.Options.lift dotnetSdk.Value
-    >> DotNet.Options.withWorkingDirectory wd
-
-let inline yarnWorkDir (ws : string) (yarnParams : Yarn.YarnParams) =
-    { yarnParams with WorkingDirectory = ws }
-
-let root = __SOURCE_DIRECTORY__
-
-module Source =
-    let dir = root </> "src"
-    let projectFile = dir </> "Thoth.Json.Giraffe.fsproj"
-
-module Tests =
-    let dir = root </> "tests"
-    let projectFile = dir </> "Thoth.Json.Giraffe.Tests.fsproj"
-
-let gitOwner = "thoth-org"
-let repoName = "Thoth.Json.Giraffe"
+open BlackFox.CommandLine
+open FsToolkit.ErrorHandling
 
 module Util =
 
-    let visitFile (visitor: string -> string) (fileName : string) =
+    let visitFile (visitor: string->string) (fileName: string) =
         File.ReadAllLines(fileName)
         |> Array.map (visitor)
         |> fun lines -> File.WriteAllLines(fileName, lines)
 
-    let replaceLines (replacer: string -> Match -> string option) (reg: Regex) (fileName: string) =
+    let replaceLines (replacer: string->Match->string option) (reg: Regex) (fileName: string) =
         fileName |> visitFile (fun line ->
             let m = reg.Match(line)
             if not m.Success
@@ -62,50 +31,12 @@ module Util =
                 | None -> line
                 | Some newLine -> newLine)
 
-// Module to print colored message in the console
-module Logger =
-    let consoleColor (fc : ConsoleColor) =
-        let current = Console.ForegroundColor
-        Console.ForegroundColor <- fc
-        { new IDisposable with
-              member x.Dispose() = Console.ForegroundColor <- current }
-
-    let warn str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.DarkYellow in printf "%s" s) str
-    let warnfn str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.DarkYellow in printfn "%s" s) str
-    let error str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Red in printf "%s" s) str
-    let errorfn str = Printf.kprintf (fun s -> use c = consoleColor ConsoleColor.Red in printfn "%s" s) str
-
-let run (cmd:string) dir args  =
-    Command.RawCommand(cmd, Arguments.OfArgs args)
-    |> CreateProcess.fromCommand
-    |> CreateProcess.withWorkingDirectory dir
-    |> Proc.run
-    |> ignore
-
-Target.create "Clean" (fun _ ->
-    !! "src/**/bin"
-    ++ "src/**/obj"
-    ++ "tests/**/bin"
-    ++ "tests/**/obj"
-    ++ "temp/"
-    |> Shell.cleanDirs
-)
-
-Target.create "YarnInstall"(fun _ ->
-    Yarn.install id
-)
-
-Target.create "DotnetRestore" (fun _ ->
-    DotNet.restore (dtntWorkDir Source.dir) ""
-    // DotNet.restore (dtntWorkDir Tests.dir) ""
-)
-
-let needsPublishing (versionRegex: Regex) (newVersion: string) projFile =
+// Build a NuGet package
+let needsPublishing (versionRegex: Regex) (releaseNotes: ReleaseNotes.ReleaseNotes) projFile =
     printfn "Project: %s" projFile
-    if newVersion.ToUpper().EndsWith("NEXT")
-        || newVersion.ToUpper().EndsWith("UNRELEASED")
+    if releaseNotes.NugetVersion.ToUpper().EndsWith("NEXT")
     then
-        Logger.warnfn "Version marked as unreleased version in Changelog, don't publish yet."
+        printfn "Version in Release Notes ends with NEXT, don't publish yet."
         false
     else
         File.ReadLines(projFile)
@@ -115,117 +46,104 @@ let needsPublishing (versionRegex: Regex) (newVersion: string) projFile =
         |> function
             | None -> failwith "Couldn't find version in project file"
             | Some m ->
-                let sameVersion = m.Groups.[1].Value = newVersion
+                let sameVersion = m.Groups.[1].Value = releaseNotes.NugetVersion
                 if sameVersion then
-                    Logger.warnfn "Already version %s, no need to publish." newVersion
+                    printfn "Already version %s, no need to publish." releaseNotes.NugetVersion
                 not sameVersion
 
-let pushNuget (newVersion: string) (projFile: string) =
-    let versionRegex = Regex("<Version>(.*?)</Version>", RegexOptions.IgnoreCase)
+let toPackageReleaseNotes (notes: string list) =
+    String.Join("\n * ", notes)
+    |> (fun txt -> txt.Replace("\"", "\\\""))
 
-    let nugetKey =
-        match Environment.environVarOrNone "NUGET_KEY" with
-        | Some nugetKey -> nugetKey
-        | None -> failwith "The Nuget API key must be set in a NUGET_KEY environmental variable"
+let createPublishNugetStageForProject (projectFile : string) =
+    let projectDir = IO.Path.GetDirectoryName(projectFile)
 
-    let needsPublishing = needsPublishing versionRegex newVersion projFile
+    stage $"Publish NuGet for {projectFile}" {
+        workingDir projectDir
 
-    (versionRegex, projFile) ||> Util.replaceLines (fun line _ ->
-        versionRegex.Replace(line, "<Version>" + newVersion + "</Version>") |> Some)
+        run (fun ctx -> asyncResult {
+            let nugetKey = ctx.GetEnvVar "NUGET_KEY"
+            let releaseNotes = projectDir </> "RELEASE_NOTES.md" |> ReleaseNotes.load
+            let versionRegex = Regex("<Version>(.*?)</Version>", RegexOptions.IgnoreCase)
 
-    DotNet.pack (fun p ->
-            DotNet.Options.lift dotnetSdk.Value p
+            do! ctx.RunCommand "pwd"
+
+            if needsPublishing versionRegex releaseNotes projectFile then
+                (versionRegex, projectFile)
+                ||> Util.replaceLines (fun line _ ->
+                    versionRegex.Replace(line, "<Version>"+releaseNotes.NugetVersion+"</Version>")
+                    |> Some
+                )
+
+                let! dotnetPackOutput =
+                    CmdLine.empty
+                    |> CmdLine.appendRaw "dotnet"
+                    |> CmdLine.appendRaw "pack"
+                    |> CmdLine.appendPrefix "-c" "Release"
+                    |> CmdLine.appendRaw $"""/p:PackageReleaseNotes="{toPackageReleaseNotes releaseNotes.Notes}" """
+                    |> CmdLine.toString
+                    |> ctx.RunCommandCaptureOutput
+
+                let m = Regex.Match(dotnetPackOutput, ".*'(?<nupkg_path>.*\.(?<version>.*\..*\..*)\.nupkg)'")
+
+                if not m.Success then
+                    failwithf "Couldn't find NuGet package in output: %s" dotnetPackOutput
+
+                let nupkgPath = m.Groups.["nupkg_path"].Value
+
+                do! CmdLine.empty
+                    |> CmdLine.appendRaw "dotnet"
+                    |> CmdLine.appendRaw "nuget"
+                    |> CmdLine.appendRaw "push"
+                    |> CmdLine.appendRaw nupkgPath
+                    |> CmdLine.appendPrefix "--api-key" nugetKey
+                    |> CmdLine.appendPrefix "--source" "nuget.org"
+                    |> CmdLine.toString
+                    |> ctx.RunCommand
+        }
         )
-        projFile
+    }
 
-    let projDir = Path.GetDirectoryName(projFile)
 
-    let file =
-        Directory.GetFiles(projDir </> "bin" </> "Release", "*.nupkg")
-        |> Array.find (fun nupkg -> nupkg.Contains(newVersion))
+module Stages =
 
-    if needsPublishing then
-        run
-            "dotnet"
-            root
-            [
-                "paket"
-                "push"
-                "--url"
-                "https://www.nuget.org/api/v2/package"
-                "--api-key"
-                nugetKey
-                file
-            ]
+    let clean =
+        stage "Clean" {
+            run (fun _ ->
+                [
+                    "src/bin"
+                    "src/obj"
+                    "tests/bin"
+                    "tests/obj"
+                ]
+                |> Shell.cleanDirs
+            )
+        }
 
-let versionRegex = Regex("^## ?\\[?v?([\\w\\d.-]+\\.[\\w\\d.-]+[a-zA-Z0-9])\\]?", RegexOptions.IgnoreCase)
+    let test =
+        stage "Tests" {
+            workingDir "tests"
+            run "dotnet test"
+        }
 
-let getLastVersion () =
-    File.ReadLines("CHANGELOG.md")
-        |> Seq.tryPick (fun line ->
-            let m = versionRegex.Match(line)
-            if m.Success then Some m else None)
-        |> function
-            | None -> failwith "Couldn't find version in changelog file"
-            | Some m ->
-                m.Groups.[1].Value
+pipeline "Test" {
 
-let isPreRelease (version : string) =
-    let regex = Regex(".*(alpha|beta|rc).*", RegexOptions.IgnoreCase)
-    regex.IsMatch(version)
+    Stages.clean
+    noPrefixForStep
+    Stages.test
 
-let getNotes (version : string) =
-    File.ReadLines("CHANGELOG.md")
-    |> Seq.skipWhile(fun line ->
-        let m = versionRegex.Match(line)
+    runIfOnlySpecified
+}
 
-        if m.Success then
-            m.Groups.[1].Value <> version
-        else
-            true
-    )
-    // Remove the version line
-    |> Seq.skip 1
-    // Take all until the next version line
-    |> Seq.takeWhile (fun line ->
-        let m = versionRegex.Match(line)
-        not m.Success
-    )
+pipeline "Publish" {
+    whenEnvVar "NUGET_KEY"
 
-Target.create "Test" (fun _ ->
-    DotNet.test id Tests.projectFile
-)
+    Stages.clean
+    Stages.test
 
-Target.create "Publish" (fun _ ->
-    let version = getLastVersion()
-    pushNuget version Source.projectFile
-)
+    createPublishNugetStageForProject "./src/Thoth.Json.Giraffe.fsproj"
 
-Target.create "Release" (fun _ ->
-    let version = getLastVersion()
+    runIfOnlySpecified
+}
 
-    Git.Staging.stageAll root
-    let commitMsg = sprintf "Release version %s" version
-    Git.Commit.exec root commitMsg
-    Git.Branches.push root
-
-    let token =
-        match Environment.environVarOrDefault "GITHUB_TOKEN" "" with
-        | s when not (System.String.IsNullOrWhiteSpace s) -> s
-        | _ -> failwith "The Github token must be set in a GITHUB_TOKEN environmental variable"
-
-    GitHub.createClientWithToken token
-    |> GitHub.draftNewRelease gitOwner repoName version (isPreRelease version) (getNotes version)
-    |> GitHub.publishDraft
-    |> Async.RunSynchronously
-
-)
-
-"Clean"
-    ==> "YarnInstall"
-    ==> "DotnetRestore"
-    ==> "Test"
-    ==> "Publish"
-    ==> "Release"
-
-Target.runOrList ()
+tryPrintPipelineCommandHelp ()

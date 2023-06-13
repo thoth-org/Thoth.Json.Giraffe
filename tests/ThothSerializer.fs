@@ -1,6 +1,7 @@
 module Tests.ThothSerializer
 
 open System
+open System.IO
 open System.Net.Http
 
 open Microsoft.AspNetCore.Builder
@@ -174,5 +175,53 @@ let tests =
             let! content = response.Content.ReadAsStringAsync()
 
             Expect.stringStarts content "Error while deserializing" "Deserialization exception handling failure"
+        }
+
+        testTask "DeserializeDateTypeStringAsString" {
+            let s = ThothSerializer() :> Json.ISerializer
+            let actual = s.Deserialize<string>("\"2020-01-01T00:00:00Z\"")
+
+            Expect.equal actual "2020-01-01T00:00:00Z" "Date type string can be deserialized as string"
+        }
+
+        testTask "DeserializeDateTypeStringAsDateTime" {
+            let s = ThothSerializer() :> Json.ISerializer
+            let actual = s.Deserialize<DateTime>("\"2020-01-01T00:00:00Z\"")
+            let expected = DateTime.Parse("2020-01-01T00:00:00Z").ToUniversalTime()
+
+            Expect.equal actual expected "Date type string can be deserialized as DateTime"
+        }
+
+        testTask "DeserializeDateTypeStringFromBytesAsString" {
+             let s = ThothSerializer() :> Json.ISerializer
+             let bytes = System.Text.Encoding.UTF8.GetBytes("\"2020-01-01T00:00:00Z\"")
+             let actual = s.Deserialize<string>(bytes)
+
+             Expect.equal actual "2020-01-01T00:00:00Z" "Date type string can be deserialized as string"
+        }
+
+        testTask "DeserializeDateTypeStringFromBytesAsDateTime" {
+            let s = ThothSerializer() :> Json.ISerializer
+            let bytes = System.Text.Encoding.UTF8.GetBytes("\"2020-01-01T00:00:00Z\"")
+            let actual = s.Deserialize<DateTime>(bytes)
+            let expected = DateTime.Parse("2020-01-01T00:00:00Z").ToUniversalTime()
+
+            Expect.equal actual expected "Date type string can be deserialized as DateTime"
+        }
+
+        testTask "DeserializeDateTypeStringFromStreamAsString" {
+            let s = ThothSerializer() :> Json.ISerializer
+            use stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("\"2020-01-01T00:00:00Z\""))
+            let! actual = s.DeserializeAsync<string>(stream)
+
+            Expect.equal actual "2020-01-01T00:00:00Z" "Date type string can be deserialized as string"
+        }
+        testTask "DeserializeDateTypeStringFromStreamAsDateTime" {
+            let s = ThothSerializer() :> Json.ISerializer
+            use stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("\"2020-01-01T00:00:00Z\""))
+            let! actual = s.DeserializeAsync<DateTime>(stream)
+            let expected = DateTime.Parse("2020-01-01T00:00:00Z").ToUniversalTime()
+
+            Expect.equal actual expected "Date type string can be deserialized as DateTime"
         }
   ]

@@ -95,6 +95,7 @@ type ThothSerializer (?caseStrategy : CaseStrategy, ?extra : ExtraCoders, ?skipN
             use stream = new MemoryStream(bytes)
             use streamReader = new StreamReader(stream)
             use jsonReader = new JsonTextReader(streamReader)
+            jsonReader.DateParseHandling <- DateParseHandling.None
             let json = JValue.ReadFrom jsonReader
             match Decode.fromValue "$" decoder json with
             | Ok value -> value
@@ -104,6 +105,7 @@ type ThothSerializer (?caseStrategy : CaseStrategy, ?extra : ExtraCoders, ?skipN
             let decoder = Decode.Auto.generateDecoderCached<'T>(?caseStrategy=caseStrategy, ?extra=extra)
             use streamReader = new StreamReader(stream)
             use jsonReader = new JsonTextReader(streamReader)
+            jsonReader.DateParseHandling <- DateParseHandling.None
             let! json = JValue.ReadFromAsync jsonReader
             return
               match Decode.fromValue "$" decoder json with
