@@ -6,7 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 6.0.0 - 2023-06-13
+
+### Fixed
+
+* Fix #31: Deserialize date type string as string (by @yang-qu)
+
 ## 6.0.0-beta-001 - 2021-11-11
+
+### Changed
 
 * Upgrade to Giraffe v6
 * Change the runtime to `net6.0`
